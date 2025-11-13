@@ -243,6 +243,7 @@ using Shapes = std::vector<Shape>;
 enum class TextureType { None, Sphere, CubeTop, CubeBottom, CubeFront, CubeBack, CubeLeft, CubeRight };
 
 using Float3 = std::array<float, 3>;
+using Float9 = std::array<float, 9>;
 
 // see https://en.wikipedia.org/wiki/Wavefront_.obj_file#Texture_options
 struct TextureOption final {
@@ -313,6 +314,9 @@ struct Material final {
     TextureOption sheen_texopt;
     TextureOption emissive_texopt;
     TextureOption normal_texopt;
+
+    // BRT extension (see https://grupodiana.github.io/BRT-Documentation/library/service-modules/service-room/)
+    Float9 acoustic_coeffs = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // x-acoustic-coeffs    
 };
 
 using Materials = std::vector<Material>;
@@ -5541,6 +5545,11 @@ inline size_t ParseReals(std::string_view text, size_t max_count, Float3* out)
     return ParseReals(text, max_count, out->data());
 }
 
+inline size_t ParseReals(std::string_view text, size_t max_count, Float9* out)
+{
+    return ParseReals(text, max_count, out->data());
+}
+
 inline size_t ParseReals(std::string_view text, size_t max_count, Buffer<float>* out)
 {
     auto count = size_t{};
@@ -6097,6 +6106,13 @@ inline ParseMaterialsResult ParseMaterials(std::string_view text)
         }
         case '#': {
             line_parsed = true;
+            break;
+        }
+        case 'X': {
+            if (StartsWith(line, "X-acoustic-coeffs ") || StartsWith(line, "X-acoustic-coeffs\t")) {
+                line.remove_prefix(18);
+                line_parsed = 9 == ParseReals(line, 9, &material.acoustic_coeffs);            
+            }
             break;
         }
         } // end switch
