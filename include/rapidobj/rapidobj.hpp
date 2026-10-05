@@ -129,7 +129,7 @@ class Array final {
     using pointer         = value_type*;
     using const_pointer   = const value_type*;
     using iterator        = pointer;
-    using const_iterator  = const_pointer;
+    using const_iterator  = const_pointer;    
 
     Array() noexcept {}
     Array(size_type size) : m_state{ size ? std::unique_ptr<T[]>(new T[size]) : nullptr, size } {}
@@ -244,6 +244,7 @@ enum class TextureType { None, Sphere, CubeTop, CubeBottom, CubeFront, CubeBack,
 
 using Float3 = std::array<float, 3>;
 using Float9 = std::array<float, 9>;
+using Double9 = std::array<double, 9>;
 
 // see https://en.wikipedia.org/wiki/Wavefront_.obj_file#Texture_options
 struct TextureOption final {
@@ -316,7 +317,8 @@ struct Material final {
     TextureOption normal_texopt;
 
     // BRT extension (see https://grupodiana.github.io/BRT-Documentation/library/service-modules/service-room/)
-    Float9 acoustic_coeffs = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // x-acoustic-coeffs    
+    //Float9 acoustic_coeffs = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // x-acoustic-coeffs      
+    Double9 acoustic_coeffs = {}; // x-acoustic-coeffs 
 };
 
 using Materials = std::vector<Material>;
@@ -5515,7 +5517,9 @@ inline auto ParseReals(std::string_view line, float* out1, float* out2, float* o
     return result;
 }
 
-inline size_t ParseReals(std::string_view text, size_t max_count, float* out)
+template <typename Real>
+inline size_t ParseReals(std::string_view text, size_t max_count, Real* out)
+//inline size_t ParseReals(std::string_view text, size_t max_count, float* out)
 {
     auto count = size_t{};
 
@@ -5576,6 +5580,11 @@ inline size_t ParseReals(std::string_view text, size_t max_count, Buffer<float>*
     TrimLeft(text);
 
     return text.empty() ? count : 0;
+}
+
+inline size_t ParseReals(std::string_view text, size_t max_count, Double9* out)
+{
+    return ParseReals(text, max_count, out->data());
 }
 
 inline auto ParseFace(
